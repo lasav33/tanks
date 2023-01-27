@@ -4,6 +4,7 @@ import road
 import random
 import bullet
 import enemies
+import Finish
 
 
 class Player_tank(pygame.sprite.Sprite):
@@ -76,6 +77,13 @@ class Player_tank(pygame.sprite.Sprite):
                 if self.yvel < 0:
                     self.rect.top = p.rect.bottom
 
+    def destroy(self, obj):
+        if pygame.sprite.collide_rect(self, obj):
+            del obj
+            self.destroed = True
+            return True
+        return False
+
 
 mapp = ['********************',
         '*                  *',
@@ -97,7 +105,7 @@ homes = ['data/home1.png', 'data/home2.png', 'data/home3.png', 'data/home4.png']
 route = 0
 run = False
 timer = pygame.time.Clock()
-PLAYER_SPEED = 1
+PLAYER_SPEED = 2
 pygame.init()
 size = width, height = 800, 600
 screen = pygame.display.set_mode(size)
@@ -123,44 +131,68 @@ left = False
 right = False
 up = False
 down = False
+finish = Finish.Finish()
 enemy = enemies.Enemy()
 all_objects.add(enemy)
+time = 0
 while GAME:
-    timer.tick(60)
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            GAME = False
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_a:
-            left = True
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_d:
-            right = True
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_w:
-            up = True
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_s:
-            down = True
-        if event.type == pygame.KEYUP and event.key == pygame.K_d:
-            right = False
-        if event.type == pygame.KEYUP and event.key == pygame.K_a:
-            left = False
-        if event.type == pygame.KEYUP and event.key == pygame.K_w:
-            up = False
-        if event.type == pygame.KEYUP and event.key == pygame.K_s:
-            down = False
-        if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-            bull = bullet.Bullet(route, gamer.rect.x, gamer.rect.y)
-            bullet_all.append(bull)
+    try:
+        timer.tick(60)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                GAME = False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_a:
+                left = True
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_d:
+                right = True
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_w:
+                up = True
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_s:
+                down = True
+            if event.type == pygame.KEYUP and event.key == pygame.K_d:
+                right = False
+            if event.type == pygame.KEYUP and event.key == pygame.K_a:
+                left = False
+            if event.type == pygame.KEYUP and event.key == pygame.K_w:
+                up = False
+            if event.type == pygame.KEYUP and event.key == pygame.K_s:
+                down = False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                bull = bullet.Bullet(route, gamer.rect.x, gamer.rect.y)
+                bullet_all.append(bull)
 
-    screen.fill('black')
-    all_objects.draw(screen)
-    for obj in bullet_all:
-        obj.updateVelion()
-        for i in platforms:
-            if i.collide(obj):
+        screen.fill('black')
+        all_objects.draw(screen)
+        if time == 60 and not enemy.destroied:
+            if enemy.rot == 'left':
+                bull = bullet.Bullet(180, enemy.rect.x, enemy.rect.y)
+            if enemy.rot == 'right':
+                bull = bullet.Bullet(0, enemy.rect.x, enemy.rect.y)
+            if enemy.rot == 'up':
+                bull = bullet.Bullet(90, enemy.rect.x, enemy.rect.y)
+            if enemy.rot == 'down':
+                bull = bullet.Bullet(-90, enemy.rect.x, enemy.rect.y)
+            bullet_all.append(bull)
+            time = 0
+        for obj in bullet_all:
+            obj.updateVelion()
+            for i in platforms:
+                if i.collide(obj):
+                    bullet_all.pop(bullet_all.index(obj))
+            if enemy.destroy(obj):
                 bullet_all.pop(bullet_all.index(obj))
-        obj.draw(screen)
-        print(bullet_all)
-    enemy.updateVel(platforms)
-    gamer.updateVel()
+            if gamer.destroy(obj):
+                bullet_all.pop(bullet_all.index(obj))
+                gamer.image = pygame.image.load('data/destroygamer.png')
+                del enemy
+            obj.draw(screen)
+        enemy.updateVel(platforms)
+        time += 1
+        gamer.updateVel()
+    except NameError:
+        if finish.rect.y != 0:
+            finish.rect.y -= 5
+        all_objects.add(finish)
     clock.tick(fps)
     pygame.display.flip()
 pygame.quit()

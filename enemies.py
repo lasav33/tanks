@@ -13,26 +13,27 @@ class Enemy(pygame.sprite.Sprite):
         self.rect.x = 710
         self.rect.y = 40
         self.rot = 'left'
+        self.destroied = False
 
     def updateVel(self, platforms):
-        if self.collide(platforms):
-            self.rot = rotation[random.randint(0, 3)]
-        if self.rot == 'left':
-            self.xvel = -ENEMY_SPEED
-        if self.rot == 'right':
-            self.xvel = ENEMY_SPEED
-        if self.rot == 'up':
-            self.yvel = -ENEMY_SPEED
-        if self.rot == 'down':
-            self.yvel = ENEMY_SPEED
-        if self.rot != 'down' and self.rot != 'up':
-            self.yvel = 0
-        if self.rot != 'right' and self.rot != 'left':
-            self.xvel = 0
-        self.rotation()
-        self.rect.y += self.yvel
-        self.rect.x += self.xvel
-        print(self.rect.x, self.rect.y, self.rot)
+        if not self.destroied:
+            if self.collide(platforms):
+                self.rot = rotation[random.randint(0, 3)]
+            if self.rot == 'left':
+                self.xvel = -ENEMY_SPEED
+            if self.rot == 'right':
+                self.xvel = ENEMY_SPEED
+            if self.rot == 'up':
+                self.yvel = -ENEMY_SPEED
+            if self.rot == 'down':
+                self.yvel = ENEMY_SPEED
+            if self.rot != 'down' and self.rot != 'up':
+                self.yvel = 0
+            if self.rot != 'right' and self.rot != 'left':
+                self.xvel = 0
+            self.rotation()
+            self.rect.y += self.yvel
+            self.rect.x += self.xvel
 
     def collide(self, platforms):
         for p in platforms:
@@ -49,6 +50,14 @@ class Enemy(pygame.sprite.Sprite):
                 if self.rot == 'up':
                     self.rect.top = p.rect.bottom
                 return True
+
+    def destroy(self, obj):
+        if pygame.sprite.collide_rect(self, obj):
+            del obj
+            self.destroied = True
+            return True
+        return False
+
 
     def rotation(self):
         global route
@@ -68,4 +77,4 @@ class Enemy(pygame.sprite.Sprite):
 
 
 rotation = ['left', 'right', 'up', 'down']
-ENEMY_SPEED = 4
+ENEMY_SPEED = 2
