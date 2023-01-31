@@ -14,6 +14,8 @@ class Enemy(pygame.sprite.Sprite):
         self.rect.y = 40
         self.rot = 'left'
         self.destroied = False
+        self.time = 0
+
 
     def updateVel(self, platforms):
         if not self.destroied:
@@ -52,7 +54,7 @@ class Enemy(pygame.sprite.Sprite):
                 return True
 
     def destroy(self, obj):
-        if pygame.sprite.collide_rect(self, obj):
+        if pygame.sprite.collide_rect(self, obj) and obj.gamer:
             del obj
             self.destroied = True
             return True

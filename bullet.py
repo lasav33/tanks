@@ -2,12 +2,13 @@ import pygame
 
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, rout, x, y):
+    def __init__(self, rout, x, y, bul=False):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.Surface((8, 8))
         self.color = (255, 0, 0)
         self.yvel = 0
         self.xvel = 0
+        self.gamer = bul
         if rout == 0:
             self.rect = pygame.Rect(x + 30, y + 12, 8, 8)
             self.xvel = 8

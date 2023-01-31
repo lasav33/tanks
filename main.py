@@ -91,16 +91,17 @@ mapp = ['********************',
         '* **            ** *',
         '*    ******* ** *  *',
         '****         **   **',
-        '*    ** * ******* **',
-        '* ***** *         **',
-        '*       * ******* **',
-        '* ******* **       *',
-        '*    ***  ** ***** *',
-        '****   * *   **    *',
-        '*  *** * * **** ** *',
-        '*                  *',
+        '*     *** ******* **',
+        '* ***  **         **',
+        '* **** ** **********',
+        '* **** ** **       *',
+        '*    * *  ** ***** *',
+        '****   * *   ***** *',
+        '*  *** * * ******* *',
+        '*      *           *',
         '********************']
 
+enemys = []
 homes = ['data/home1.png', 'data/home2.png', 'data/home3.png', 'data/home4.png']
 route = 0
 run = False
@@ -113,6 +114,7 @@ pygame.display.flip()
 platforms = list()
 all_objects = pygame.sprite.Group()
 bullet_all = list()
+roads = []
 for i in range(15):
     for j in range(20):
         if mapp[i][j] == '*':
@@ -120,7 +122,8 @@ for i in range(15):
             platforms.append(bord)
             all_objects.add(bord)
         else:
-            roads = road.Road(j * 40, i * 40)
+            road1 = road.Road(j * 40, i * 40)
+            roads.append(road1)
             all_objects.add(roads)
 gamer = Player_tank()
 all_objects.add(gamer)
@@ -131,12 +134,20 @@ left = False
 right = False
 up = False
 down = False
-finish = Finish.Finish()
-enemy = enemies.Enemy()
-all_objects.add(enemy)
-time = 0
+for i in range(20):
+    enemy = enemies.Enemy()
+    enemys.append(enemy)
+all_objects.add(enemys)
+time = 100
+f1 = pygame.font.Font(None, 30)
+text1 = f1.render(str(1 * time), True, (0, 255, 0))
+f2 = pygame.font.Font(None, 30)
+record = 0
 while GAME:
     try:
+        text2 = f1.render(str(record), True, (0, 255, 0))
+        if time <= 100:
+            text1 = f1.render(str(1 * time), True, (0, 255, 0))
         timer.tick(60)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -157,42 +168,73 @@ while GAME:
                 up = False
             if event.type == pygame.KEYUP and event.key == pygame.K_s:
                 down = False
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                bull = bullet.Bullet(route, gamer.rect.x, gamer.rect.y)
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE and time >= 100:
+                bull = bullet.Bullet(route, gamer.rect.x, gamer.rect.y, True)
                 bullet_all.append(bull)
+                time = 0
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                del all_objects
+                time = 100
+                text1 = f1.render(str(1 * time), True, (0, 255, 0))
+                enemys.clear()
+                bullet_all.clear()
+                gamer = Player_tank()
+                record = 0
+                for i in range(20):
+                    enemy = enemies.Enemy()
+                    enemys.append(enemy)
+                all_objects = pygame.sprite.Group()
+                all_objects.add(platforms)
+                all_objects.add(roads)
+                all_objects.add(enemys)
+                all_objects.add(gamer)
 
         screen.fill('black')
         all_objects.draw(screen)
-        if time == 60 and not enemy.destroied:
-            if enemy.rot == 'left':
-                bull = bullet.Bullet(180, enemy.rect.x, enemy.rect.y)
-            if enemy.rot == 'right':
-                bull = bullet.Bullet(0, enemy.rect.x, enemy.rect.y)
-            if enemy.rot == 'up':
-                bull = bullet.Bullet(90, enemy.rect.x, enemy.rect.y)
-            if enemy.rot == 'down':
-                bull = bullet.Bullet(-90, enemy.rect.x, enemy.rect.y)
-            bullet_all.append(bull)
-            time = 0
+        for i in enemys:
+            if i.time == 100 and not i.destroied:
+                if i.rot == 'left':
+                    bull = bullet.Bullet(180, i.rect.x, i.rect.y)
+                if i.rot == 'right':
+                    bull = bullet.Bullet(0, i.rect.x, i.rect.y)
+                if i.rot == 'up':
+                    bull = bullet.Bullet(90, i.rect.x, i.rect.y)
+                if i.rot == 'down':
+                    bull = bullet.Bullet(-90, i.rect.x, i.rect.y)
+                bullet_all.append(bull)
+                i.time = 0
+            i.time += 1
+            i.updateVel(platforms)
         for obj in bullet_all:
             obj.updateVelion()
             for i in platforms:
                 if i.collide(obj):
                     bullet_all.pop(bullet_all.index(obj))
-            if enemy.destroy(obj):
-                bullet_all.pop(bullet_all.index(obj))
+            for i in enemys:
+                if obj in bullet_all and i.destroy(obj):
+                    bullet_all.pop(bullet_all.index(obj))
+                    i.image = pygame.image.load('data/destroyenemy.png')
+                    enemys.pop(enemys.index(i))
+                    enemy = enemies.Enemy()
+                    enemys.append(enemy)
+                    all_objects.add(enemys)
+                    record += 100
+                    del i
             if gamer.destroy(obj):
                 bullet_all.pop(bullet_all.index(obj))
                 gamer.image = pygame.image.load('data/destroygamer.png')
-                del enemy
+                del gamer
+                finish = Finish.Finish(False)
             obj.draw(screen)
-        enemy.updateVel(platforms)
-        time += 1
         gamer.updateVel()
+        time += 1
+        screen.blit(text1, (10, 10))
+        screen.blit(text2, (750, 10))
     except NameError:
         if finish.rect.y != 0:
             finish.rect.y -= 5
         all_objects.add(finish)
+        record = 0
     clock.tick(fps)
     pygame.display.flip()
 pygame.quit()
